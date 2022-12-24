@@ -1,5 +1,6 @@
 import json
 import unittest
+import random
 from typing import Any
 
 import requests
@@ -75,3 +76,36 @@ class TestBase(unittest.TestCase):
         response = requests.request("POST", url, headers=headers, data=payload)
 
         return response.json()['result']
+
+    def try_replace_invocation(self, body: dict) -> bool:
+        url = f"{self.server_url}/webapi?/message"
+
+        payload = json.dumps({
+            "jsonrpc": "2.0",
+            "method": "TryReplaceInvocation",
+            "id": random.randint(0, 10000),
+            "params": body
+        })
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        response = requests.request("POST", url, headers=headers, data=payload)
+
+        return response.json()['result']
+
+    def invoke(self, request_id: int, body: dict, url: str):
+        template = {
+            "jsonrpc": "2.0",
+            "method": "Invoke",
+            "id": request_id,
+            "params": body
+        }
+
+        payload = json.dumps(template)
+        headers = {
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.request("POST", url, headers=headers, data=payload)
+        return response

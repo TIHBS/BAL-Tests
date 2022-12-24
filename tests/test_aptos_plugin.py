@@ -30,7 +30,7 @@ class TestAptosPlugin(TestBase):
 
     def test_send_single_transaction(self):
         url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
-        template = self.get_invocation_tempate()
+        template = self.get_invocation_template()
         payload = json.dumps(template)
         headers = {
             'Content-Type': 'application/json'
@@ -46,7 +46,7 @@ class TestAptosPlugin(TestBase):
         pending_invocations_count_before = len(self.get_pending_transactions())
 
         url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
-        template = self.get_invocation_tempate()
+        template = self.get_invocation_template()
         template["params"]["signers"] = ["123", "345"]
         template["params"]["minimumNumberOfSignatures"] = 1
 
@@ -67,7 +67,7 @@ class TestAptosPlugin(TestBase):
         pending_invocations_count_before = len(self.get_pending_transactions())
 
         url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
-        template = self.get_invocation_tempate()
+        template = self.get_invocation_template()
         template["params"]["signers"] = ["123", "345"]
         template["params"]["minimumNumberOfSignatures"] = 1
 
@@ -86,31 +86,69 @@ class TestAptosPlugin(TestBase):
         pending_invocations_after = len(self.get_pending_transactions())
         self.assertEqual(pending_invocations_after, pending_invocations_count_before)
 
-    def get_invocation_tempate(self) -> dict:
+    def test_try_replace_invocation(self):
+        pending_invocations_initial_count = len(self.get_pending_transactions())
+
+        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
+        template = self.get_invocation_template()
+        template["params"]["signers"] = ["123", "345"]
+        template["params"]["minimumNumberOfSignatures"] = 1
+
+        payload = json.dumps(template)
+        headers = {
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.request("POST", url, headers=headers, data=payload)
+
+        pending_invocations_before = self.get_pending_transactions()
+        self.assertEqual(pending_invocations_initial_count + 1, len(pending_invocations_before))
+
+        self.assertEqual(response.status_code, 200)
+        replace_template = template['params']
+        replace_template['signer'] = "123"
+        replace_template['minimumNumberOfSignatures'] = 2
+        try_replace_result = self.try_replace_invocation(template["params"])
+        self.assertTrue(try_replace_result)
+
+        pending_invocations_after = self.get_pending_transactions()
+        self.assertEqual(len(pending_invocations_after), len(pending_invocations_before))
+
+        invocation = next((x for x in pending_invocations_after if
+                           x['correlationIdentifier'] == replace_template['correlationIdentifier']),
+                          None)
+
+        self.assertIsNotNone(invocation)
+        self.assertEqual(invocation['minimumNumberOfSignatures'], 2)
+
+    def get_invocation_template(self) -> dict:
         return {
             "jsonrpc": "2.0",
             "method": "Invoke",
             "id": random.randint(0, 10000),
-            "params": {
-                "functionIdentifier": "set_message",
-                "inputs": [
-                    {
-                        "name": "message",
-                        "type": "{\"type\":\"string\"}",
-                        "value": "0xA850fvertyb475bAB36455c59f0D2339B28d74b894e3D1"
-                    }
-                ],
-                "outputs": [],
-                "timeout": 1000000,
-                "doc": 50,
-                "callbackUrl": "http://127.0.0.1:5010/",
-                "signature": "",
-                "correlationIdentifier": ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)),
+            "params": self.get_invocation_body()
+        }
 
-                "typeArguments": [],
-                "signers": [],
-                "minimumNumberOfSignatures": 0
-            }
+    def get_invocation_body(self) -> dict:
+        return {
+            "functionIdentifier": "set_message",
+            "inputs": [
+                {
+                    "name": "message",
+                    "type": "{\"type\":\"string\"}",
+                    "value": "0xA850fvertyb475bAB36455c59f0D2339B28d74b894e3D1"
+                }
+            ],
+            "outputs": [],
+            "timeout": 1000000,
+            "doc": 50,
+            "callbackUrl": "http://127.0.0.1:5010/",
+            "signature": "",
+            "correlationIdentifier": ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)),
+
+            "typeArguments": [],
+            "signers": [],
+            "minimumNumberOfSignatures": 0
         }
 
 
