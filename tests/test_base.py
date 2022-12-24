@@ -109,3 +109,26 @@ class TestBase(unittest.TestCase):
 
         response = requests.request("POST", url, headers=headers, data=payload)
         return response
+
+    def sign_invocation(self, correlation_id: str, signature: str, signer: str):
+        url = f"{self.server_url}/webapi?/message"
+
+        body = {
+            "jsonrpc": "2.0",
+            "method": "SignInvocation",
+            "id": 1,
+            "params": {
+                "signature": signature,
+                "signer": signer,
+                "correlationIdentifier": correlation_id
+            }
+
+        }
+
+        payload = json.dumps(body)
+        headers = {
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.request("POST", url, headers=headers, data=payload)
+        return response.json()['result']
