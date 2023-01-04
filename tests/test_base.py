@@ -1,8 +1,11 @@
+import base64
 import json
+import os
 import unittest
 import random
 from typing import Any
-
+from ellipticcurve.ecdsa import Ecdsa
+from ellipticcurve.privateKey import PrivateKey, secp256k1
 import requests
 
 
@@ -13,6 +16,7 @@ class TestBase(unittest.TestCase):
     def setUp(self):
         self.server_url = "http://localhost:9091"
         self.plugin_dir = "/home/ash/Softwares/apache-tomcat-8.5.84/plugins"
+        self.signers = self.read_signers()
 
     def upload_plugin(self):
         url = f"{self.server_url}/webapi/plugins/"
@@ -132,3 +136,29 @@ class TestBase(unittest.TestCase):
 
         response = requests.request("POST", url, headers=headers, data=payload)
         return response.json()['result']
+
+    def read_signers(self):
+        keys_file = os.path.join("assets", "keys.json")
+
+        result = {}
+        with open(keys_file, 'r') as f:
+            signers = json.load(f)
+            for signer in signers:
+                base64_message = signer["privateKey"]
+                base64_bytes = base64_message.encode('ascii')
+                message_bytes = base64.b64decode(base64_bytes)
+
+                privateKey = PrivateKey.fromDer(message_bytes)
+                publicKey = privateKey.publicKey()
+                pem_public_key = publicKey.toPem()
+                publicK = pem_public_key.replace("\n", '')
+                publicK = publicK.replace('-----BEGIN PUBLIC KEY-----', "")
+                publicK = publicK.replace('-----END PUBLIC KEY-----', '')
+                assert publicK == signer['publicKey']
+
+                result[signer["name"]] = {
+                    'publicKey': publicKey,
+                    'privateKey': privateKey,
+                    'public_key_str' : signer['publicKey']
+                }
+        return result

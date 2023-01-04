@@ -1,4 +1,3 @@
-import codecs
 import string
 import unittest
 import os
@@ -6,7 +5,7 @@ import random
 import json
 from tests.test_base import TestBase
 import requests
-import ecdsa
+from ellipticcurve.ecdsa import Ecdsa
 
 
 class TestAptosPlugin(TestBase):
@@ -17,13 +16,13 @@ class TestAptosPlugin(TestBase):
         self.address = "9f709239a4caf988527df46b7dca3797b740e408e48aa713e79a87fe85a53c4d"
         self.blockchain = "aptos"
 
-        sk_1 = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
-        vk_1 = sk_1.get_verifying_key()
-
-        sk_2 = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
-        vk_2 = sk_2.get_verifying_key()
-
-        self.signers = [{'sk': sk_1, 'vk': vk_1.to_string().hex()}, {'sk': sk_2, 'vk': vk_2.to_string().hex()}]
+        # sk_1 = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
+        # vk_1 = sk_1.get_verifying_key()
+        #
+        # sk_2 = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
+        # vk_2 = sk_2.get_verifying_key()
+        #
+        # self.signers = [{'sk': sk_1, 'vk': vk_1.to_string().hex()}, {'sk': sk_2, 'vk': vk_2.to_string().hex()}]
 
     def setUp(self):
         super(TestAptosPlugin, self).setUp()
@@ -166,7 +165,7 @@ class TestAptosPlugin(TestBase):
 
         url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
         template = self.get_invocation_template()
-        template["params"]["signers"] = [self.signers[0]['vk']]
+        template["params"]["signers"] = [self.signers["alice"]['public_key_str']]
         template["params"]["minimumNumberOfSignatures"] = 1
 
         payload = json.dumps(template)
@@ -182,14 +181,67 @@ class TestAptosPlugin(TestBase):
         invocation = next((x for x in pending_invocations if
                            x['correlationIdentifier'] == template["params"]['correlationIdentifier']),
                           None)
-        encoded_tx = codecs.encode(json.dumps(invocation))
-        self.assertIsNotNone(encoded_tx)
 
-        signature = self.signers[0]['sk'].sign(encoded_tx)
+        # hs = hashlib.sha256(json.dumps(invocation).encode('utf-8')).hexdigest()
+        correlation_identifier = invocation["correlationIdentifier"]
+        version = invocation["version"]
 
-        result = self.sign_invocation(invocation['correlationIdentifier'], signature.hex(), self.signers[0]['vk'])
+        # encoded_tx = codecs.encode(hs)
+        # self.assertIsNotNone(encoded_tx)
+
+        private_key = self.signers["alice"]["privateKey"]
+        public_key = self.signers["alice"]["public_key_str"]
+
+        signature = Ecdsa.sign(version, private_key)
+        base64_encoded_signature = signature.toBase64()
+
+        result = self.sign_invocation(correlation_identifier, base64_encoded_signature, public_key)
+
+        # result = self.sign_invocation(invocation['correlationIdentifier'], signature.hex(), self.signers[0]['vk'])
 
         self.assertTrue(result)
+
+    # def test_p(self):
+    #     pending_invocations_initial_count = len(self.get_pending_transactions())
+    #
+    #     url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
+    #     template = self.get_invocation_template()
+    #     template["params"]["signers"] = [self.signers[0]['vk']]
+    #     template["params"]["minimumNumberOfSignatures"] = 1
+    #
+    #     payload = json.dumps(template)
+    #     headers = {
+    #         'Content-Type': 'application/json'
+    #     }
+    #
+    #     response = requests.request("POST", url, headers=headers, data=payload)
+    #     pending_invocations = self.get_pending_transactions()
+    #
+    #     self.assertEqual(pending_invocations_initial_count + 1, len(pending_invocations))
+    #
+    #     invocation = next((x for x in pending_invocations if
+    #                        x['correlationIdentifier'] == template["params"]['correlationIdentifier']),
+    #                       None)
+    #
+    #     key = "97ddae0f3a25b92268175400149d65d6887b9cefaf28ea2c078e05cdc15a3c0a"
+    #
+    #     privkey = PrivateKey(bytes(bytearray.fromhex(key)), raw=True)
+    #     message = invocation["version"].encode('ascii')
+    #     sig = privkey.ecdsa_sign_recoverable(message)
+    #     byt, recovery_id = privkey.ecdsa_recoverable_serialize(sig)
+    #     byt_hex = byt.hex()
+    #     r = byt_hex[0:64]
+    #     s = byt_hex[64:]
+    #     v = hex((27 + recovery_id))[2:]
+    #
+    #     signature = v + r + s
+    #     public_key = privkey.pubkey.serialize().hex()
+    #
+    #     result = self.sign_invocation(invocation['correlationIdentifier'], signature, public_key)
+    #
+    #     # result = self.sign_invocation(invocation['correlationIdentifier'], signature.hex(), self.signers[0]['vk'])
+    #
+    #     self.assertTrue(result)
 
 
 if __name__ == '__main__':
