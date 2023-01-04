@@ -15,15 +15,7 @@ class TestAptosPlugin(TestBase):
         self.plugin_path = os.path.join("assets", "bal-aptos-plugin-1.0-SNAPSHOT.jar")
         self.address = "9f709239a4caf988527df46b7dca3797b740e408e48aa713e79a87fe85a53c4d"
         self.blockchain = "aptos"
-
-        # sk_1 = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
-        # vk_1 = sk_1.get_verifying_key()
-        #
-        # sk_2 = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
-        # vk_2 = sk_2.get_verifying_key()
-        #
-        # self.signers = [{'sk': sk_1, 'vk': vk_1.to_string().hex()}, {'sk': sk_2, 'vk': vk_2.to_string().hex()}]
-
+        
     def setUp(self):
         super(TestAptosPlugin, self).setUp()
         # self.upload_plugin()
@@ -182,12 +174,8 @@ class TestAptosPlugin(TestBase):
                            x['correlationIdentifier'] == template["params"]['correlationIdentifier']),
                           None)
 
-        # hs = hashlib.sha256(json.dumps(invocation).encode('utf-8')).hexdigest()
         correlation_identifier = invocation["correlationIdentifier"]
         version = invocation["version"]
-
-        # encoded_tx = codecs.encode(hs)
-        # self.assertIsNotNone(encoded_tx)
 
         private_key = self.signers["alice"]["privateKey"]
         public_key = self.signers["alice"]["public_key_str"]
@@ -196,8 +184,6 @@ class TestAptosPlugin(TestBase):
         base64_encoded_signature = signature.toBase64()
 
         result = self.sign_invocation(correlation_identifier, base64_encoded_signature, public_key)
-
-        # result = self.sign_invocation(invocation['correlationIdentifier'], signature.hex(), self.signers[0]['vk'])
 
         self.assertTrue(result)
 
