@@ -4,12 +4,12 @@ import os
 import unittest
 import random
 from typing import Any
-from ellipticcurve.ecdsa import Ecdsa
-from ellipticcurve.privateKey import PrivateKey, secp256k1
+from ellipticcurve.privateKey import PrivateKey
 import requests
+from abc import ABC, abstractmethod
 
 
-class TestBase(unittest.TestCase):
+class TestBase(ABC, unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(TestBase, self).__init__(*args, **kwargs)
 
@@ -17,19 +17,19 @@ class TestBase(unittest.TestCase):
         self.server_url = "http://localhost:9091"
         self.plugin_dir = "/home/ash/Softwares/apache-tomcat-8.5.84/plugins"
         self.signers = self.read_signers()
+        self.plugin = None
 
     def upload_plugin(self):
         url = f"{self.server_url}/webapi/plugins/"
+        f_name = self.plugin_path.split(os.sep)[-1]
 
         payload = {}
         files = [
-            ('file', ('file', open(self.plugin_path, 'rb'), 'application/octet-stream'))
+            ('file', (f_name, open(self.plugin_path, 'rb'), 'application/octet-stream'))
         ]
         headers = {}
 
         response = requests.request("POST", url, headers=headers, data=payload, files=files)
-
-        self.assertEqual(response.status_code, 200)
 
     def upload_connection_profile(self, body: dict):
         url = f"{self.server_url}/webapi/configure/"
@@ -159,6 +159,40 @@ class TestBase(unittest.TestCase):
                 result[signer["name"]] = {
                     'publicKey': publicKey,
                     'privateKey': privateKey,
-                    'public_key_str' : signer['publicKey']
+                    'public_key_str': signer['publicKey']
                 }
         return result
+
+    def load_connection_profile(self, profile: dict):
+        url = f"{self.server_url}/webapi/configure/"
+
+        payload = json.dumps(profile)
+        headers = {
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.request("POST", url, headers=headers, data=payload)
+
+        self.assertEqual(response.status_code, 204)
+
+    def get_invocation_template(self) -> dict:
+        return {
+            "jsonrpc": "2.0",
+            "method": "Invoke",
+            "id": random.randint(0, 10000),
+            "params": self.get_invocation_body()
+        }
+
+    @abstractmethod
+    def get_invocation_body(self):
+        pass
+
+    def start_plugin(self):
+        url = f"{self.server_url}/webapi/plugins/{self.plugin}/start"
+
+        payload = {}
+        headers = {}
+
+        response = requests.request("POST", url, headers=headers, data=payload)
+
+        self.assertEqual(response.status_code, 200)

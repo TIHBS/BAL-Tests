@@ -12,13 +12,16 @@ class TestAptosPlugin(TestBase):
 
     def __init__(self, *args, **kwargs):
         super(TestAptosPlugin, self).__init__(*args, **kwargs)
-        self.plugin_path = os.path.join("assets", "bal-aptos-plugin-1.0-SNAPSHOT.jar")
         self.address = "9f709239a4caf988527df46b7dca3797b740e408e48aa713e79a87fe85a53c4d"
         self.blockchain = "aptos"
-        
+
     def setUp(self):
         super(TestAptosPlugin, self).setUp()
-        # self.upload_plugin()
+        self.plugin_path = os.path.join("assets", "bal-generic-plugin-1.0-SNAPSHOT.jar")
+        self.plugin = "generic-plugin"
+
+        self.upload_plugin()
+        self.start_plugin()
 
         connection_profile = {
             "aptos-1": {
@@ -27,7 +30,8 @@ class TestAptosPlugin(TestBase):
                 "keyFile": os.path.join("assets", "aptos.json")
             }
         }
-        # self.upload_connection_profile(body=connection_profile)
+
+        self.load_connection_profile(connection_profile)
 
     def test_send_single_transaction(self):
         url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
