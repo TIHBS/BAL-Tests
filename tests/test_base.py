@@ -20,16 +20,17 @@ class TestBase(ABC, unittest.TestCase):
         self.plugin = None
 
     def upload_plugin(self):
-        url = f"{self.server_url}/webapi/plugins/"
-        f_name = self.plugin_path.split(os.sep)[-1]
+        with  open(self.plugin_path, 'rb') as f:
+            url = f"{self.server_url}/webapi/plugins/"
+            f_name = self.plugin_path.split(os.sep)[-1]
 
-        payload = {}
-        files = [
-            ('file', (f_name, open(self.plugin_path, 'rb'), 'application/octet-stream'))
-        ]
-        headers = {}
+            payload = {}
+            files = [
+                ('file', (f_name, f, 'application/octet-stream'))
+            ]
+            headers = {}
 
-        response = requests.request("POST", url, headers=headers, data=payload, files=files)
+            response = requests.request("POST", url, headers=headers, data=payload, files=files)
 
     def upload_connection_profile(self, body: dict):
         url = f"{self.server_url}/webapi/configure/"
@@ -48,7 +49,7 @@ class TestBase(ABC, unittest.TestCase):
 
         payload = json.dumps({
             "jsonrpc": "2.0",
-            "method": "GetPendingTransactions",
+            "method": "Get",
             "id": 1,
             "params": {}
         })
@@ -65,7 +66,7 @@ class TestBase(ABC, unittest.TestCase):
 
         payload = json.dumps({
             "jsonrpc": "2.0",
-            "method": "TryCancelInvocation",
+            "method": "Cancel",
             "id": 1,
             "params": {
                 "signature": signature,
@@ -86,7 +87,7 @@ class TestBase(ABC, unittest.TestCase):
 
         payload = json.dumps({
             "jsonrpc": "2.0",
-            "method": "TryReplaceInvocation",
+            "method": "Replace",
             "id": random.randint(0, 10000),
             "params": body
         })
@@ -119,7 +120,7 @@ class TestBase(ABC, unittest.TestCase):
 
         body = {
             "jsonrpc": "2.0",
-            "method": "SignInvocation",
+            "method": "Sign",
             "id": 1,
             "params": {
                 "signature": signature,

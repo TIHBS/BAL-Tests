@@ -27,7 +27,7 @@ class TestSuiPlugin(TestBase):
         connection_profile = {
             "sui-1": {
                 "@type": "generic",
-                "remotePluginUrl": "http://localhost:8545",
+                "remotePluginUrl": "http://localhost:8585",
             }
         }
         self.load_connection_profile(connection_profile)
@@ -50,6 +50,8 @@ class TestSuiPlugin(TestBase):
         data = response.json()
 
         self.assertIsNone(data.get("error"))
+        self.assertEqual('OK', data.get("result"))
+
         self.get_pending_transactions()
 
     def get_invocation_body(self) -> dict:
