@@ -85,8 +85,7 @@ class TestBase(ABC, unittest.TestCase):
 
         return response
 
-    def try_replace_invocation(self, body: dict) -> bool:
-        url = f"{self.server_url}/webapi?/message"
+    def try_replace_invocation(self, body: dict, url) -> Response:
 
         payload = json.dumps({
             "jsonrpc": "2.0",
@@ -100,7 +99,7 @@ class TestBase(ABC, unittest.TestCase):
 
         response = requests.request("POST", url, headers=headers, data=payload)
 
-        return response.json()['result']
+        return response
 
     def invoke(self, body: dict, url: str):
         payload = json.dumps(body)

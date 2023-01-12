@@ -10,7 +10,7 @@ class TestAptosPlugin(TestBase):
 
     def __init__(self, *args, **kwargs):
         super(TestAptosPlugin, self).__init__(*args, **kwargs)
-        self.address = "9f709239a4caf988527df46b7dca3797b740e408e48aa713e79a87fe85a53c4d"
+        self.address = "0x9f709239a4caf988527df46b7dca3797b740e408e48aa713e79a87fe85a53c4d/message"
         self.blockchain = "aptos"
 
     def setUp(self):
@@ -32,7 +32,7 @@ class TestAptosPlugin(TestBase):
         self.load_connection_profile(connection_profile)
 
     def test_send_single_transaction(self):
-        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
+        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}"
         template = self.get_sample_invocation_template_1()
 
         response = self.invoke(template, url)
@@ -47,7 +47,7 @@ class TestAptosPlugin(TestBase):
     def test_send_invocation_with_multiple_signers(self):
         pending_invocations_count_before = len(self.get_pending_transactions())
 
-        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
+        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}"
         template = self.get_sample_invocation_template_1()
         template["params"]["signers"] = ["123", "345"]
         template["params"]["minimumNumberOfSignatures"] = 1
@@ -68,7 +68,7 @@ class TestAptosPlugin(TestBase):
     def test_cancel_invocation_with_multiple_signers(self):
         pending_invocations_count_before = len(self.get_pending_transactions())
 
-        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
+        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}"
         template = self.get_sample_invocation_template_1()
         template["params"]["signers"] = ["123", "345"]
         template["params"]["minimumNumberOfSignatures"] = 1
@@ -98,27 +98,39 @@ class TestAptosPlugin(TestBase):
     def test_try_replace_invocation(self):
         pending_invocations_initial_count = len(self.get_pending_transactions())
 
-        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
-        template = self.get_invocation_template()
+        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}"
+        template = self.get_sample_invocation_template_1()
         template["params"]["signers"] = ["123", "345"]
         template["params"]["minimumNumberOfSignatures"] = 1
 
-        payload = json.dumps(template)
-        headers = {
-            'Content-Type': 'application/json'
-        }
-
-        response = requests.request("POST", url, headers=headers, data=payload)
+        response = self.invoke(template, url)
 
         pending_invocations_before = self.get_pending_transactions()
         self.assertEqual(pending_invocations_initial_count + 1, len(pending_invocations_before))
+
+        p = next(p for p in pending_invocations_before if
+                 p["correlationIdentifier"] == template["params"]["correlationIdentifier"])
+        self.assertIsNotNone(p)
 
         self.assertEqual(response.status_code, 200)
         replace_template = template['params']
         replace_template['signer'] = "123"
         replace_template['minimumNumberOfSignatures'] = 2
-        try_replace_result = self.try_replace_invocation(template["params"])
-        self.assertTrue(try_replace_result)
+
+        del replace_template["proposer"]
+
+        pub_key, sig = self.get_proposer_signature(p["invocationHash"])
+
+        replace_template["signature"] = sig
+        replace_template["signer"] = pub_key
+
+        try_replace_response = self.try_replace_invocation(replace_template, url)
+
+        self.assertEqual(200, try_replace_response.status_code)
+
+        try_replace_result = try_replace_response.json()
+        self.assertIsNone(try_replace_result.get("error"))
+        self.assertTrue(try_replace_result["result"])
 
         pending_invocations_after = self.get_pending_transactions()
         self.assertEqual(len(pending_invocations_after), len(pending_invocations_before))
@@ -134,7 +146,7 @@ class TestAptosPlugin(TestBase):
     def test_sign_invocation(self):
         pending_invocations_initial_count = len(self.get_pending_transactions())
 
-        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
+        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}"
         template = self.get_invocation_template()
         template["params"]["signers"] = [self.signers["alice"]['public_key_str']]
         template["params"]["minimumNumberOfSignatures"] = 1
