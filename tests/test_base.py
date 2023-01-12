@@ -1,12 +1,15 @@
 import base64
 import json
 import os
+import string
 import unittest
 import random
 from typing import Any
 from ellipticcurve.privateKey import PrivateKey
 import requests
 from abc import ABC, abstractmethod
+from ellipticcurve.ecdsa import Ecdsa
+from requests import Response
 
 
 class TestBase(ABC, unittest.TestCase):
@@ -61,7 +64,7 @@ class TestBase(ABC, unittest.TestCase):
 
         return response.json()['result']
 
-    def try_cancel_invocation(self, correlationId: str, signature: str, signer: str) -> bool:
+    def try_cancel_invocation(self, correlationId: str, signature: str, signer: str) -> Response:
         url = f"{self.server_url}/webapi?/message"
 
         payload = json.dumps({
@@ -80,7 +83,7 @@ class TestBase(ABC, unittest.TestCase):
 
         response = requests.request("POST", url, headers=headers, data=payload)
 
-        return response.json()['result']
+        return response
 
     def try_replace_invocation(self, body: dict) -> bool:
         url = f"{self.server_url}/webapi?/message"
@@ -99,15 +102,8 @@ class TestBase(ABC, unittest.TestCase):
 
         return response.json()['result']
 
-    def invoke(self, request_id: int, body: dict, url: str):
-        template = {
-            "jsonrpc": "2.0",
-            "method": "Invoke",
-            "id": request_id,
-            "params": body
-        }
-
-        payload = json.dumps(template)
+    def invoke(self, body: dict, url: str):
+        payload = json.dumps(body)
         headers = {
             'Content-Type': 'application/json'
         }
@@ -177,16 +173,36 @@ class TestBase(ABC, unittest.TestCase):
         self.assertEqual(response.status_code, 204)
 
     def get_invocation_template(self) -> dict:
+        private_key = self.signers["alice"]["privateKey"]
+        public_key = self.signers["alice"]["public_key_str"]
+
+        params = {
+            "functionIdentifier": "",
+            "inputs": [],
+            "outputs": [],
+            "timeout": 1000000,
+            "doc": 50,
+            "callbackUrl": "http://127.0.0.1:5010/",
+            "signature": "",
+            "proposer": "",
+            "correlationIdentifier": ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)),
+
+            "typeArguments": [],
+            "signers": [],
+            "minimumNumberOfSignatures": 0
+        }
+
+        signature = Ecdsa.sign(params["correlationIdentifier"], private_key)
+        base64_encoded_signature = signature.toBase64()
+        params["proposer"] = public_key
+        params["signature"] = base64_encoded_signature
+
         return {
             "jsonrpc": "2.0",
             "method": "Invoke",
             "id": random.randint(0, 10000),
-            "params": self.get_invocation_body()
+            "params": params
         }
-
-    @abstractmethod
-    def get_invocation_body(self):
-        pass
 
     def start_plugin(self):
         url = f"{self.server_url}/webapi/plugins/{self.plugin}/start"
@@ -197,3 +213,11 @@ class TestBase(ABC, unittest.TestCase):
         response = requests.request("POST", url, headers=headers, data=payload)
 
         self.assertEqual(response.status_code, 200)
+
+    def get_proposer_signature(self, message) -> (str, str):
+        private_key = self.signers["alice"]["privateKey"]
+        public_key = self.signers["alice"]["public_key_str"]
+
+        signature = Ecdsa.sign(message, private_key)
+        base64_encoded_signature = signature.toBase64()
+        return public_key, base64_encoded_signature
