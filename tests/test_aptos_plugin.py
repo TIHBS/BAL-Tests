@@ -147,16 +147,12 @@ class TestAptosPlugin(TestBase):
         pending_invocations_initial_count = len(self.get_pending_transactions())
 
         url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}"
-        template = self.get_invocation_template()
-        template["params"]["signers"] = [self.signers["alice"]['public_key_str']]
+        template = self.get_sample_invocation_template_1()
+        template["params"]["signers"] = [self.signers["bob"]['public_key_str']]
         template["params"]["minimumNumberOfSignatures"] = 1
 
-        payload = json.dumps(template)
-        headers = {
-            'Content-Type': 'application/json'
-        }
-
-        response = requests.request("POST", url, headers=headers, data=payload)
+        response = self.invoke(template, url)
+        self.assertEqual(200, response.status_code)
         pending_invocations = self.get_pending_transactions()
 
         self.assertEqual(pending_invocations_initial_count + 1, len(pending_invocations))
@@ -166,59 +162,54 @@ class TestAptosPlugin(TestBase):
                           None)
 
         correlation_identifier = invocation["correlationIdentifier"]
-        version = invocation["version"]
+        invocation_hash = invocation["invocationHash"]
 
-        private_key = self.signers["alice"]["privateKey"]
-        public_key = self.signers["alice"]["public_key_str"]
+        private_key = self.signers["bob"]["privateKey"]
+        public_key = self.signers["bob"]["public_key_str"]
 
-        signature = Ecdsa.sign(version, private_key)
+        signature = Ecdsa.sign(invocation_hash, private_key)
         base64_encoded_signature = signature.toBase64()
 
-        result = self.sign_invocation(correlation_identifier, base64_encoded_signature, public_key)
+        response = self.sign_invocation(correlation_identifier, base64_encoded_signature, public_key)
+        self.assertEqual(200, response.status_code)
+        body = response.json()
+        self.assertIsNone(body.get("error"))
 
-        self.assertTrue(result)
+        self.assertTrue(body["result"])
 
-    # def test_p(self):
-    #     pending_invocations_initial_count = len(self.get_pending_transactions())
-    #
-    #     url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}/message"
-    #     template = self.get_invocation_template()
-    #     template["params"]["signers"] = [self.signers[0]['vk']]
-    #     template["params"]["minimumNumberOfSignatures"] = 1
-    #
-    #     payload = json.dumps(template)
-    #     headers = {
-    #         'Content-Type': 'application/json'
-    #     }
-    #
-    #     response = requests.request("POST", url, headers=headers, data=payload)
-    #     pending_invocations = self.get_pending_transactions()
-    #
-    #     self.assertEqual(pending_invocations_initial_count + 1, len(pending_invocations))
-    #
-    #     invocation = next((x for x in pending_invocations if
-    #                        x['correlationIdentifier'] == template["params"]['correlationIdentifier']),
-    #                       None)
-    #
-    #     key = "97ddae0f3a25b92268175400149d65d6887b9cefaf28ea2c078e05cdc15a3c0a"
-    #
-    #     privkey = PrivateKey(bytes(bytearray.fromhex(key)), raw=True)
-    #     message = invocation["version"].encode('ascii')
-    #     sig = privkey.ecdsa_sign_recoverable(message)
-    #     byt, recovery_id = privkey.ecdsa_recoverable_serialize(sig)
-    #     byt_hex = byt.hex()
-    #     r = byt_hex[0:64]
-    #     s = byt_hex[64:]
-    #     v = hex((27 + recovery_id))[2:]
-    #
-    #     signature = v + r + s
-    #     public_key = privkey.pubkey.serialize().hex()
-    #
-    #     result = self.sign_invocation(invocation['correlationIdentifier'], signature, public_key)
-    #
-    #     # result = self.sign_invocation(invocation['correlationIdentifier'], signature.hex(), self.signers[0]['vk'])
-    #
-    #     self.assertTrue(result)
+    def test_sign_invocation_when_charlie_is_not_in_signers_list(self):
+        pending_invocations_initial_count = len(self.get_pending_transactions())
+
+        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address={self.address}"
+        template = self.get_sample_invocation_template_1()
+        template["params"]["signers"] = [self.signers["bob"]['public_key_str']]
+        template["params"]["minimumNumberOfSignatures"] = 1
+
+        response = self.invoke(template, url)
+        self.assertEqual(200, response.status_code)
+        pending_invocations = self.get_pending_transactions()
+
+        self.assertEqual(pending_invocations_initial_count + 1, len(pending_invocations))
+
+        invocation = next((x for x in pending_invocations if
+                           x['correlationIdentifier'] == template["params"]['correlationIdentifier']),
+                          None)
+
+        correlation_identifier = invocation["correlationIdentifier"]
+        invocation_hash = invocation["invocationHash"]
+
+        private_key = self.signers["charlie"]["privateKey"]
+        public_key = self.signers["charlie"]["public_key_str"]
+
+        signature = Ecdsa.sign(invocation_hash, private_key)
+        base64_encoded_signature = signature.toBase64()
+
+        response = self.sign_invocation(correlation_identifier, base64_encoded_signature, public_key)
+        self.assertEqual(200, response.status_code)
+        body = response.json()
+        self.assertIsNone(body.get("error"))
+
+        self.assertFalse(body["result"])
 
     def get_sample_invocation_template_1(self):
         template = self.get_invocation_template()

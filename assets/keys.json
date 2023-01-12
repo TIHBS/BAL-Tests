@@ -3,5 +3,15 @@
     "name": "alice",
     "publicKey": "MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEaFkfNVli0NOECZkFCNij3InuDB1Aqi9fa/JQ70aYm/t0bNWuOMJCy2q0CgWN7OB0CwzMGyT1R8Y1R8AYMWgjYw==",
     "privateKey": "MHQCAQEEIG/Gr1EH9RbKUobD2cPmSYr4laYHDyqRSnDSLyLWSKaAoAcGBSuBBAAKoUQDQgAEaFkfNVli0NOECZkFCNij3InuDB1Aqi9fa/JQ70aYm/t0bNWuOMJCy2q0CgWN7OB0CwzMGyT1R8Y1R8AYMWgjYw=="
+  },
+  {
+    "name": "bob",
+    "publicKey": "MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEdAUQgW3mKr4z/vnFVZHYHYLOu4sJgupLx/bcdNcwbJXKwNLeTx8ObZWDc1vif62wqMkFdc9BxxL/J0CINRU5xQ==",
+    "privateKey": "MHQCAQEEILhE2w/nH+3a+539kEPoP9XFmDYFa1KAgvF3zUqZ1GS2oAcGBSuBBAAKoUQDQgAEdAUQgW3mKr4z/vnFVZHYHYLOu4sJgupLx/bcdNcwbJXKwNLeTx8ObZWDc1vif62wqMkFdc9BxxL/J0CINRU5xQ=="
+  },
+  {
+    "name": "charlie",
+    "publicKey": "MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE+13fGVQFjBEY3qpHawCOMNvNuVvZcNQAg+3ATlvWO26/k5QjGBdoj/AucyilHW57Z/WGli+TcYiugPaleE/ejQ==",
+    "privateKey": "MHQCAQEEIEAAr+N/Q9Arko6kIr8XC6O/g39TSCDg0SwN6FtxytgPoAcGBSuBBAAKoUQDQgAE+13fGVQFjBEY3qpHawCOMNvNuVvZcNQAg+3ATlvWO26/k5QjGBdoj/AucyilHW57Z/WGli+TcYiugPaleE/ejQ=="
   }
 ]

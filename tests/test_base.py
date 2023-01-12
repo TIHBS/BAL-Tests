@@ -86,7 +86,6 @@ class TestBase(ABC, unittest.TestCase):
         return response
 
     def try_replace_invocation(self, body: dict, url) -> Response:
-
         payload = json.dumps({
             "jsonrpc": "2.0",
             "method": "Replace",
@@ -110,7 +109,7 @@ class TestBase(ABC, unittest.TestCase):
         response = requests.request("POST", url, headers=headers, data=payload)
         return response
 
-    def sign_invocation(self, correlation_id: str, signature: str, signer: str):
+    def sign_invocation(self, correlation_id: str, signature: str, signer: str) -> Response:
         url = f"{self.server_url}/webapi?/message"
 
         body = {
@@ -131,7 +130,7 @@ class TestBase(ABC, unittest.TestCase):
         }
 
         response = requests.request("POST", url, headers=headers, data=payload)
-        return response.json()['result']
+        return response
 
     def read_signers(self):
         keys_file = os.path.join("assets", "keys.json")
