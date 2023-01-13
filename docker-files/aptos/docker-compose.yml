@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  aptos:
+    container_name: aptos
+    ports:
+      - 8080:8080
+      - 8081:8081
+    image: "aptos"
+    entrypoint: [ "/usr/bin/mongod","--bind_ip_all","--replSet","rs0" ]
+#
+#  aptossetup:
+#    container_name: aptos
+#    depends_on:
+#      - aptos
+#    restart: "no"
+#    entrypoint: [ "bash", "-c", "sleep 10 && mongo --host mongo:27017 --eval 'rs.initiate()'" ]
