@@ -9,5 +9,5 @@ RUN apt-get update \
 
 ADD init.sh /app/init.sh
 ADD flow.json /app/flow.json
-
+ADD contracts /app/contracts
 RUN chmod +x /app/init.sh
