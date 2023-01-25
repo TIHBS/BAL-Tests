@@ -44,6 +44,19 @@ class TestAptosPlugin(TestBase):
 
         self.get_pending_transactions()
 
+    def test_mint_nft_transaction(self):
+        url = f"{self.server_url}/webapi?blockchain={self.blockchain}&blockchain-id=aptos-1&address=0x3/token"
+        template = self.get_sample_template_mint_nft()
+
+        response = self.invoke(template, url)
+        self.assertEqual(response.status_code, 200)
+
+        result = response.json()
+
+        self.assertIsNone(result.get('error'))
+
+        self.get_pending_transactions()
+
     def test_send_invocation_with_multiple_signers(self):
         pending_invocations_count_before = len(self.get_pending_transactions())
 
@@ -221,6 +234,35 @@ class TestAptosPlugin(TestBase):
             }
         ]
         template["params"]["functionIdentifier"] = "set_message"
+        return template
+
+    def get_sample_template_mint_nft(self):
+        template = self.get_invocation_template()
+        correlation_id = template["params"]["correlationIdentifier"]
+        template["params"]["functionIdentifier"] = "create_collection_script"
+        template["params"]["inputs"] = [
+            {
+                "name": "name",
+                "type": "{\"type\":\"string\"}",
+                "value": "test: " + correlation_id
+            }, {
+                "name": "description",
+                "type": "{\"type\":\"string\"}",
+                "value": "description: " + correlation_id
+            }, {
+                "name": "uri",
+                "type": "{\"type\":\"string\"}",
+                "value": "uri: " + correlation_id
+            }, {
+                "name": "supply",
+                "type": "{\"type\": \"integer\", \"minimum\": \"0\", \"maximum\":\"18446744073709551615\"}",
+                "value": "100"
+            }, {
+                "name": "mutate_setting",
+                "type": "{\"type\": \"array\", \"items\": \"boolean\"}",
+                "value": json.dumps([False, False, False])
+            }
+        ]
         return template
 
 

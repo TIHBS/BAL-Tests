@@ -1,22 +1,20 @@
-import string
+import math
 import unittest
 import os
-import random
 import json
-
+import time
 from tests.test_base import TestBase
 import requests
-from ellipticcurve.ecdsa import Ecdsa
 
 
-class TestSuiPlugin(TestBase):
+class TestFlowPlugin(TestBase):
     def __init__(self, *args, **kwargs):
-        super(TestSuiPlugin, self).__init__(*args, **kwargs)
-        self.address = "0x2/devnet_nft"
-        self.blockchain_id = "sui-1"
+        super(TestFlowPlugin, self).__init__(*args, **kwargs)
+        self.address = "0xf8d6e0586b0a20c7/Example"
+        self.blockchain_id = "flow-1"
 
     def setUp(self):
-        super(TestSuiPlugin, self).setUp()
+        super(TestFlowPlugin, self).setUp()
 
         self.plugin_path = os.path.join("assets", "bal-generic-plugin-1.0-SNAPSHOT.jar")
         self.plugin = "generic-plugin"
@@ -25,9 +23,10 @@ class TestSuiPlugin(TestBase):
         self.start_plugin()
 
         connection_profile = {
-            "sui-1": {
+            "flow-1": {
                 "@type": "generic",
-                "remotePluginUrl": "http://localhost:8585",
+                "remotePluginUrl": "http://localhost:7878",
+                "canHandleDelegatedSubscription": False
             }
         }
         self.load_connection_profile(connection_profile)
@@ -65,7 +64,7 @@ class TestSuiPlugin(TestBase):
             "method": "Query",
             "id": 29433,
             "params": {
-                "eventIdentifier": "0x2::devnet_nft::MintNFTEvent",
+                "eventIdentifier": "StringUpdate",
                 "filter": "",
                 "typeArguments": [],
                 "timeframe": {
@@ -91,15 +90,56 @@ class TestSuiPlugin(TestBase):
         self.assertIsNotNone(data.get('id'))
         self.assertIsNotNone(data.get('result'))
 
+    def test_query_with_filter(self):
+        url = f"{self.server_url}/webapi?" \
+              f"blockchain={self.plugin}" \
+              f"&blockchain-id={self.blockchain_id}" \
+              f"&address={self.address}"
+
+        template = self.get_invocation_body_1()
+        template["params"]["inputs"] = [{"name": "name", "type": "string", "value": "test-2 NFT"}]
+
+        start_time = str(math.floor((time.time() - 100) * 1000))
+        self.invoke(template, url)
+
+        time.sleep(5)
+
+        query_body = {
+            "jsonrpc": "2.0",
+            "method": "Query",
+            "id": 29433,
+            "params": {
+                "eventIdentifier": "StringUpdate",
+                "filter": "name==\"newValue\" and value==\"test-2 NFT\"",
+                "typeArguments": [],
+                "timeframe": {
+                    "from": start_time,
+                    "to": str(math.floor(time.time() * 1000))
+                },
+                "parameters": []
+            }
+        }
+
+        payload = json.dumps(query_body)
+        headers = {
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.request("POST", url, headers=headers, data=payload)
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+
+        self.assertIsNone(data.get("error"))
+        self.assertIsNotNone(data)
+        self.assertIsNotNone(data.get('id'))
+        self.assertIsNotNone(data.get('result'))
+        self.assertTrue(len(data['result']["occurrences"]) >= 1)
+
     def get_invocation_body_1(self) -> dict:
         template = self.get_invocation_template()
-        template["params"]["functionIdentifier"] = "mint"
-        template["params"]["inputs"] = [
-            {"name": "name", "type": "string", "value": "Example NFT"},
-            {"name": "description", "type": "string", "value": "An NFT created for testing"},
-            {"name": "ipfs", "type": "string",
-             "value": "ipfs://<removed>"}]
-
+        template["params"]["functionIdentifier"] = "setValues"
+        template["params"]["inputs"] = [{"name": "name", "type": "string", "value": "test NFT"}]
         return template
 
 
