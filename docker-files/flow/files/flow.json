@@ -1,0 +1,22 @@
+{
+  "networks": {
+    "emulator": "127.0.0.1:3569",
+    "mainnet": "access.mainnet.nodes.onflow.org:9000",
+    "sandboxnet": "access.sandboxnet.nodes.onflow.org:9000",
+    "testnet": "access.devnet.nodes.onflow.org:9000"
+  },
+  "accounts": {
+    "emulator-account": {
+      "address": "f8d6e0586b0a20c7",
+      "key": "a213fa8437ecf46eab5ab8de9953c05112650da74fed7b76d4fe39184383dd94"
+    },
+    "test-1": {
+      "address": "179b6b1cb6755e31",
+      "key": "b9a5b4a1e1c422b89c0e3b6778b779dbb58a1cf8f352f6e729f20f39b5af16f3"
+    },
+    "test-2": {
+      "address": "01cf0e2f2f715450",
+      "key": "93a08844da75136231946c18f3daa90e7f35eed138c2df741fc929371d519f4c"
+    }
+  }
+}
