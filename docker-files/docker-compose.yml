@@ -1,0 +1,39 @@
+version: "3.9"
+services:
+  sui:
+    container_name: sui
+    image: sui
+    build:
+      context: ./sui
+      dockerfile: Dockerfile
+    volumes:
+      - ./sui/files/:/app/
+    command: >
+      sh -c "sui genesis && sui start"
+    ports:
+      - "9001:9001"
+  aptos:
+    container_name: aptos
+    image: aptos
+    build:
+      context: ./aptos
+      dockerfile: Dockerfile
+    command: >
+      aptos node run-local-testnet --with-faucet
+    volumes:
+      - ./aptos/files/:/app/
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+  flow:
+    container_name: flow
+    image: flow
+    build:
+      context: ./flow
+      dockerfile: Dockerfile
+    volumes:
+      - ./flow/files/:/app/
+    ports:
+      - "3569:3569"
+      - "8888:8888"
+    network_mode: host

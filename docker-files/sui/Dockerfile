@@ -1,11 +1,13 @@
-FROM ubuntu:22.04
+FROM rust:1.65
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR app
 
 RUN apt-get update \
-  && apt-get install -y curl git-all libssl-dev libclang-dev cmake pkg-config
+  && apt-get install -y libclang-dev
 
-ADD init.sh /app/init.sh
-RUN chmod +x /app/init.sh
+RUN cargo install --locked --git https://github.com/MystenLabs/sui.git --branch devnet sui
+#
+#ADD files/init.sh /app/init.sh
+#RUN chmod +x /app/init.sh
