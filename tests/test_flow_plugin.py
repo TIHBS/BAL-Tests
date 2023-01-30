@@ -53,6 +53,37 @@ class TestFlowPlugin(TestBase):
 
         self.get_pending_transactions()
 
+    def test_invoke_with_error(self):
+        url = f"{self.server_url}/webapi?" \
+              f"blockchain={self.plugin}" \
+              f"&blockchain-id={self.blockchain_id}" \
+              f"&address={self.address}"
+        template = self.get_invocation_body_1()
+        template["params"]["inputs"] = [
+            {"name": "name", "type": "{\"type\":\"string\"}", "value": "test-2 NFT"},
+            {"name": "newBooleanVar", "type": "{\"type\":\"boolean\"}", "value": "true"},
+            {"name": "newInt8Var", "type": "{\"type\":\"integer\",\"maximum\": \"127\", \"minimum\": \"-1280\"}",
+             "value": "-10"},
+            {"name": "newUInt128Var",
+             "type": "{\"type\":\"integer\",\"maximum\": \"340282366920938463463374607431768211455\", \"minimum\": \"0\"}",
+             "value": "1000"}]
+
+        payload = json.dumps(template)
+        headers = {
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.request("POST", url, headers=headers, data=payload)
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+
+        self.assertIsNone(data.get("error"))
+        self.assertEqual('OK', data.get("result"))
+
+        self.get_pending_transactions()
+
     def test_query(self):
         url = f"{self.server_url}/webapi?" \
               f"blockchain={self.plugin}" \
@@ -97,7 +128,14 @@ class TestFlowPlugin(TestBase):
               f"&address={self.address}"
 
         template = self.get_invocation_body_1()
-        template["params"]["inputs"] = [{"name": "name", "type": "string", "value": "test-2 NFT"}]
+        template["params"]["inputs"] = [
+            {"name": "name", "type": "{\"type\":\"string\"}", "value": "test-2 NFT"},
+            {"name": "newBooleanVar", "type": "{\"type\":\"boolean\"}", "value": "true"},
+            {"name": "newInt8Var", "type": "{\"type\":\"integer\",\"maximum\": \"127\", \"minimum\": \"-128\"}",
+             "value": "-10"},
+            {"name": "newUInt128Var",
+             "type": "{\"type\":\"integer\",\"maximum\": \"340282366920938463463374607431768211455\", \"minimum\": \"0\"}",
+             "value": "1000"}]
 
         start_time = str(math.floor((time.time() - 100) * 1000))
         self.invoke(template, url)
@@ -139,7 +177,14 @@ class TestFlowPlugin(TestBase):
     def get_invocation_body_1(self) -> dict:
         template = self.get_invocation_template()
         template["params"]["functionIdentifier"] = "setValues"
-        template["params"]["inputs"] = [{"name": "name", "type": "string", "value": "test NFT"}]
+        template["params"]["inputs"] = [
+            {"name": "name", "type": "{\"type\":\"string\"}", "value": "test NFT"},
+            {"name": "newBooleanVar", "type": "{\"type\":\"boolean\"}", "value": "true"},
+            {"name": "newInt8Var", "type": "{\"type\":\"integer\",\"maximum\": \"127\", \"minimum\": \"-128\"}",
+             "value": "-10"},
+            {"name": "newUInt128Var",
+             "type": "{\"type\":\"integer\",\"maximum\": \"340282366920938463463374607431768211455\", \"minimum\": \"0\"}",
+             "value": "1000"}]
         return template
 
 

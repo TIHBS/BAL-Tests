@@ -37,3 +37,13 @@ services:
       - "3569:3569"
       - "8888:8888"
     network_mode: host
+  bal:
+    container_name: bal
+    image: bal
+    build:
+      context: ./bal
+      dockerfile: Dockerfile
+    volumes:
+      - ./bal/files/:/app/files
+    ports:
+      - "9092:8080"
