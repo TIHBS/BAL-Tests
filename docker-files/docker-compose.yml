@@ -36,7 +36,6 @@ services:
     ports:
       - "3569:3569"
       - "8888:8888"
-    network_mode: host
   bal:
     container_name: bal
     image: bal
@@ -47,3 +46,11 @@ services:
       - ./bal/files/:/app/files
     ports:
       - "9092:8080"
+  bal_callback_handler:
+    container_name: bal_callback_handler
+    image: bal_callback_handler
+    build:
+      context: ./bal_callback_handler
+      dockerfile: Dockerfile
+    ports:
+      - "5010:5010"

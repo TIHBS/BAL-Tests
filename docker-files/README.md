@@ -1,5 +1,5 @@
 ```bash
-docker-compose up flow
+docker-compose up flow bal
 ```
 
 ```bash

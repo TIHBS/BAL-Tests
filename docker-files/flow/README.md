@@ -10,8 +10,8 @@ flow emulator --contracts true
 ```
 
 ```bash
+docker exec -it flow bash
 flow accounts add-contract contracts/hello_world.cdc
-
 flow accounts remove-contract Example
 flow accounts add-contract contracts/Example.cdc
 
