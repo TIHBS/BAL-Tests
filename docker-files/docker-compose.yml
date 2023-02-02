@@ -44,8 +44,12 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./bal/files/:/app/files
+    depends_on:
+      - bal_callback_handler
+      - bal_flow_plugin
+      - bal_sui_plugin
     ports:
-      - "9092:8080"
+      - "9091:8080"
   bal_callback_handler:
     container_name: bal_callback_handler
     image: bal_callback_handler
@@ -54,3 +58,23 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5010:5010"
+  bal_flow_plugin:
+    container_name: bal_flow_plugin
+    image: bal_flow_plugin
+    build:
+      context: ./bal_flow_plugin
+      dockerfile: Dockerfile
+    depends_on:
+      - flow
+    ports:
+      - "7878:7878"
+  bal_sui_plugin:
+    container_name: bal_sui_plugin
+    image: bal_sui_plugin
+    build:
+      context: ./bal_sui_plugin
+      dockerfile: Dockerfile
+    depends_on:
+      - sui
+    ports:
+      - "8585:8585"

@@ -1,5 +1,5 @@
 ```bash
-docker-compose up flow bal
+docker-compose up flow bal bal_callback_handler
 ```
 
 ```bash

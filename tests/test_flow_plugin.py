@@ -5,6 +5,7 @@ import json
 import time
 from tests.test_base import TestBase
 import requests
+from ellipticcurve.ecdsa import Ecdsa
 
 
 class TestFlowPlugin(TestBase):
@@ -52,6 +53,41 @@ class TestFlowPlugin(TestBase):
         self.assertEqual('OK', data.get("result"))
 
         self.get_pending_transactions()
+
+    def test_sign_invocation(self):
+        pending_invocations_initial_count = len(self.get_pending_transactions())
+
+        url = f"{self.server_url}/webapi?blockchain={self.plugin}&blockchain-id={self.blockchain_id}" \
+              f"&address={self.address}"
+        template = self.get_invocation_body_1()
+        template["params"]["signers"] = [self.signers["bob"]['public_key_str']]
+        template["params"]["minimumNumberOfSignatures"] = 1
+
+        response = self.invoke(template, url)
+        self.assertEqual(200, response.status_code)
+        pending_invocations = self.get_pending_transactions()
+
+        self.assertEqual(pending_invocations_initial_count + 1, len(pending_invocations))
+
+        invocation = next((x for x in pending_invocations if
+                           x['correlationIdentifier'] == template["params"]['correlationIdentifier']),
+                          None)
+
+        correlation_identifier = invocation["correlationIdentifier"]
+        invocation_hash = invocation["invocationHash"]
+
+        private_key = self.signers["bob"]["privateKey"]
+        public_key = self.signers["bob"]["public_key_str"]
+
+        signature = Ecdsa.sign(invocation_hash, private_key)
+        base64_encoded_signature = signature.toBase64()
+
+        response = self.sign_invocation(correlation_identifier, base64_encoded_signature, public_key)
+        self.assertEqual(200, response.status_code)
+        body = response.json()
+        self.assertIsNone(body.get("error"))
+
+        self.assertTrue(body["result"])
 
     def test_invoke_with_error(self):
         url = f"{self.server_url}/webapi?" \
@@ -138,7 +174,7 @@ class TestFlowPlugin(TestBase):
              "value": "1000"}]
 
         start_time = str(math.floor((time.time() - 100) * 1000))
-        self.invoke(template, url)
+        response = self.invoke(template, url)
 
         time.sleep(5)
 
