@@ -21,10 +21,10 @@ services:
     command: >
       aptos node run-local-testnet --with-faucet
     volumes:
-      - ./aptos/files/:/app/
+      - ./aptos/files/:/app/files
     ports:
-      - "8080:8080"
-      - "8081:8081"
+      - "9002:8080"
+      - "9003:8081"
   flow:
     container_name: flow
     image: flow
@@ -36,6 +36,8 @@ services:
     ports:
       - "3569:3569"
       - "8888:8888"
+    networks:
+      - mynetwork
   bal:
     container_name: bal
     image: bal
@@ -46,10 +48,10 @@ services:
       - ./bal/files/:/app/files
     depends_on:
       - bal_callback_handler
-      - bal_flow_plugin
-      - bal_sui_plugin
     ports:
       - "9091:8080"
+    networks:
+      - mynetwork
   bal_callback_handler:
     container_name: bal_callback_handler
     image: bal_callback_handler
@@ -58,6 +60,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5010:5010"
+    networks:
+      - mynetwork
   bal_flow_plugin:
     container_name: bal_flow_plugin
     image: bal_flow_plugin
@@ -68,6 +72,8 @@ services:
       - flow
     ports:
       - "7878:7878"
+    networks:
+      - mynetwork
   bal_sui_plugin:
     container_name: bal_sui_plugin
     image: bal_sui_plugin
@@ -78,3 +84,7 @@ services:
       - sui
     ports:
       - "8585:8585"
+
+networks:
+  mynetwork:
+    name: mynetwork

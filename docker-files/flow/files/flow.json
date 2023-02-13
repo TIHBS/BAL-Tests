@@ -1,4 +1,14 @@
 {
+  "contracts": {
+    "Example": "/app/contracts/Example.cdc"
+  },
+  "deployments": {
+    "emulator": {
+      "emulator-account": [
+        "Example"
+      ]
+    }
+  },
   "networks": {
     "emulator": "127.0.0.1:3569",
     "mainnet": "access.mainnet.nodes.onflow.org:9000",
