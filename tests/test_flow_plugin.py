@@ -6,6 +6,7 @@ import time
 from tests.test_base import TestBase
 import requests
 from ellipticcurve.ecdsa import Ecdsa
+from config import config
 
 
 class TestFlowPlugin(TestBase):
@@ -13,6 +14,7 @@ class TestFlowPlugin(TestBase):
         super(TestFlowPlugin, self).__init__(*args, **kwargs)
         self.address = "0xf8d6e0586b0a20c7/Example"
         self.blockchain_id = "flow-1"
+        self.bal_flow_plugin_url = config["BAL_FLOW_PLUGIN"]
 
     def setUp(self):
         super(TestFlowPlugin, self).setUp()
@@ -26,7 +28,7 @@ class TestFlowPlugin(TestBase):
         connection_profile = {
             "flow-1": {
                 "@type": "generic",
-                "remotePluginUrl": "http://localhost:7878",
+                "remotePluginUrl": self.bal_flow_plugin_url,
                 "canHandleDelegatedSubscription": False
             }
         }

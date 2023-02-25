@@ -10,6 +10,7 @@ import requests
 from abc import ABC, abstractmethod
 from ellipticcurve.ecdsa import Ecdsa
 from requests import Response
+from config import config
 
 
 class TestBase(ABC, unittest.TestCase):
@@ -17,8 +18,7 @@ class TestBase(ABC, unittest.TestCase):
         super(TestBase, self).__init__(*args, **kwargs)
 
     def setUp(self):
-        self.server_url = "http://localhost:9091"
-        self.plugin_dir = "/home/ash/Softwares/apache-tomcat-8.5.84/plugins"
+        self.server_url = config["BAL_URL"]
         self.signers = self.read_signers()
         self.plugin = None
 
@@ -179,8 +179,8 @@ class TestBase(ABC, unittest.TestCase):
             "inputs": [],
             "outputs": [],
             "timeout": 1000000,
-            "doc": 50,
-            "callbackUrl": "http://127.0.0.1:5010/",
+            "doc": 0,
+            "callbackUrl": config["BAL_CALLBACK_URL"],
             "signature": "",
             "proposer": "",
             "correlationIdentifier": ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)),
