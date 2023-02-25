@@ -1,0 +1,90 @@
+version: "3.9"
+services:
+  sui:
+    container_name: sui
+    image: sui
+    build:
+      context: ./sui
+      dockerfile: Dockerfile
+    volumes:
+      - ./sui/files/:/app/
+    command: >
+      sh -c "sui genesis && sui start"
+    ports:
+      - "9001:9001"
+  aptos:
+    container_name: aptos
+    image: aptos
+    build:
+      context: ./aptos
+      dockerfile: Dockerfile
+    command: >
+      aptos node run-local-testnet --with-faucet
+    volumes:
+      - ./aptos/files/:/app/files
+    ports:
+      - "9002:8080"
+      - "9003:8081"
+  flow:
+    container_name: flow
+    image: flow
+    build:
+      context: ./flow
+      dockerfile: Dockerfile
+    volumes:
+      - ./flow/files/:/app/
+    ports:
+      - "3569:3569"
+      - "8888:8888"
+    networks:
+      - mynetwork
+  bal:
+    container_name: bal
+    image: bal
+    build:
+      context: ./bal
+      dockerfile: Dockerfile
+    volumes:
+      - ./bal/files/:/app/files
+    depends_on:
+      - bal_callback_handler
+    ports:
+      - "9091:8080"
+    networks:
+      - mynetwork
+  bal_callback_handler:
+    container_name: bal_callback_handler
+    image: bal_callback_handler
+    build:
+      context: ./bal_callback_handler
+      dockerfile: Dockerfile
+    ports:
+      - "5010:5010"
+    networks:
+      - mynetwork
+  bal_flow_plugin:
+    container_name: bal_flow_plugin
+    image: bal_flow_plugin
+    build:
+      context: ./bal_flow_plugin
+      dockerfile: Dockerfile
+    depends_on:
+      - flow
+    ports:
+      - "7878:7878"
+    networks:
+      - mynetwork
+  bal_sui_plugin:
+    container_name: bal_sui_plugin
+    image: bal_sui_plugin
+    build:
+      context: ./bal_sui_plugin
+      dockerfile: Dockerfile
+    depends_on:
+      - sui
+    ports:
+      - "8585:8585"
+
+networks:
+  mynetwork:
+    name: mynetwork
